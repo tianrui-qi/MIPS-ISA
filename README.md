@@ -1,19 +1,23 @@
-# MIPS Processor in C
+## Introduction
 
-Another version of instruction is available at [Craft](https://craft.tianrui-qi.com/mips-processor) (same to this `README.md`). 
-
-## Overview
-
-We implement a full gate-level circuit representing the datapath for a reduced, but still Turing complete, MIPS instruction set architecture (ISA). We first implement logic gates like and, or, not, xor, and nand and then use them to build essential components, including memory, control, ALU, decoder, adder, multiplexor, etc. At length, we connect them by datapath. 
+We implement a full gate-level circuit representing the datapath for a reduced, 
+but still Turing complete, MIPS instruction set architecture (ISA). 
+We first implement logic gates like and, or, not, xor, and nand and then use 
+them to build essential components, including memory, control, ALU, decoder, 
+adder, multiplexor, etc. At length, we connect them by datapath. 
 
 There some rules we follow in our C implementation:
 1. No if and if-else logical control statements or equivalent.
 2. No different loop structures, i.e., basic for loops other than `for int i = 0; i < N; ++i`.
 3. No calls to any external or library functions.
 
-Basically, we want to ensure that we use gates for all logical control and operations. No tricky workarounds are allowed.
+Basically, we want to ensure that we use gates for all logical control and 
+operations. 
+No tricky workarounds are allowed.
 
-To use the code, store MIPS instruction in a file, i.e., `example1.txt`, and run the following code:
+To use the code, store MIPS instruction in a file, i.e., `example1.txt`, and run
+the following code:
+
 ```
 $ gcc -c project.c
 $ gcc project.o
@@ -39,7 +43,13 @@ Our ISA will include the following instructions:
 | lw          | I-type | Load Word           | lw reg1 reg2 offset     | reg1 = M[reg2+offset]          | 100011     |            |
 | sw          | I-type | Store Word          | sw reg1 reg2 offset     | M[reg2+offset] = reg1          | 101011     |            |
 
-The “input format” given above refers to the format of the assembly instructions we’ll parse, convert to machine code, and then process through our circuit. We implement help functions to get the op codes (6-bit), register (5-bit, except J-type), and function codes (6-bit, only for R-type), and then integrate them to parse the input instructions into their 32-bit binary machine code representation. For this project, we only consider these 9 registers below:
+The “input format” given above refers to the format of the assembly instructions
+we’ll parse, convert to machine code, and then process through our circuit. 
+We implement help functions to get the op codes (6-bit), register (5-bit, except
+J-type), and function codes (6-bit, only for R-type), and then integrate them to
+parse the input instructions into their 32-bit binary machine code 
+representation. 
+For this project, we only consider these 9 registers below:
 
 | Register | Binary | Use                     |
 |----------|--------|-------------------------|
@@ -55,25 +65,41 @@ The “input format” given above refers to the format of the assembly instruct
 
 ## Datapath Design
 
-In *Computer Organization and Design, 5th edition* by David A. Patterson and John L. Hennessy, it provides us a datapath design in Chapter 4.4, A Simple Implementation Scheme, that supports the instructions we need except jumpy and link (jal) and jump register (jr). We provide some modifications base on the design from that book to support all the instructions above. Our whole design of datapath is shown below.
+In *Computer Organization and Design, 5th edition* by David A. Patterson and 
+John L. Hennessy, it provides us a datapath design in Chapter 4.4, A Simple 
+Implementation Scheme, that supports the instructions we need except jumpy and 
+link (jal) and jump register (jr). 
+We provide some modifications base on the design from that book to support all 
+the instructions above. Our whole design of datapath is shown below.
 
-![Modified_Datapath](https://user-images.githubusercontent.com/74130971/182014394-f1fcf8b2-0b18-4643-81fb-797841ff6478.png)
+![figure-1](assets/figure-1.png)
 
-To implement jal, we change two Mux-2 near Registers Memory and Data Memory into Mux-4, expand the control signal MemtoReg and RegDst to 2-bit, and add some necessary datapath. To implement jr, we add a new 1-bit control signal called JMPReg that represents if the current instruction is jr or not. There are two ways to integrate the new signal JMPReg with the original datapath design, shown in figure below: add a new Mux-2 and treat JMPReg and Jump as two separate 1-bit control signal, or change the Mux-2 into Mux-4 and combine Jump, JMPReg into a 2-bit signal. We choose to use the first one in our design. 
+To implement jal, we change two Mux-2 near Registers Memory and Data Memory into
+Mux-4, expand the control signal MemtoReg and RegDst to 2-bit, and add some 
+necessary datapath. 
+To implement jr, we add a new 1-bit control signal called JMPReg that represents
+if the current instruction is jr or not. 
+There are two ways to integrate the new signal JMPReg with the original datapath
+design, shown in figure below: add a new Mux-2 and treat JMPReg and Jump as two
+separate 1-bit control signal, or change the Mux-2 into Mux-4 and combine Jump,
+JMPReg into a 2-bit signal. 
+We choose to use the first one in our design. 
 
-![jr_design](https://user-images.githubusercontent.com/74130971/182014050-765d4840-8afe-456e-8b7b-dcb9345e6ef9.jpg)
+![figure-2](assets/figure-2.jpg)
 
 ## Control Design
 
-Since we modify some of the control signal, a new truth table for Control and ALU Control is shown below. 
+Since we modify some of the control signal, a new truth table for Control and 
+ALU Control is shown below. 
 
-<img width="1340" alt="Screen Shot 2022-07-31 at 04 01 16" src="https://user-images.githubusercontent.com/74130971/182016131-8a0516cb-3e49-43e1-8c2a-3b17b8ffb591.png">
+![figure-3](assets/figure-3.png)
 
-We can implement the Control by sum of products (SOP), and the ALU Control by following the design below. 
+We can implement the Control by sum of products (SOP), and the ALU Control by 
+following the design below. 
 
-<img width="824" alt="Screen Shot 2022-07-31 at 04 10 11" src="https://user-images.githubusercontent.com/74130971/182016527-4c698d91-d19d-42ab-a2f5-c8c734974d7e.png">
+![figure-4](assets/figure-4.png)
 
-## Example Input and Output
+## Examples
 
 Example 1:
 ```
@@ -163,8 +189,15 @@ Data: 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 25 50
 Register: 0 0 0 0 0 0 0 0 25 50 0 0 0 0 0 0 25 50 0 0 0 0 0 0 0 0 0 0 0 32 0 0
 ```
 
-## Reference
+## References
 
-1. Rensselaer Polytechnic Institute, Fall 2021, CSCI 2500 Computer Organization by professor Konstantin Kuzmin, *MIPS Processor in C*. 
-2. *Computer Organization and Design, 5th edition* by David A. Patterson and John L. Hennessy, Chapter 4.4 A Simple Implementation Scheme.
-3. Rochester Institute of Technology, EECC 550 Computer Organization by Dr. Muhammad Shaaban, *Adding Support for jal to Single Cycle Datapath* [[link](http://meseec.ce.rit.edu/eecc550-winter2005/550-chapter5-exercises.pdf)]
+1.  *CSCI 2500 Computer Organization* 
+    by Prof. [Konstantin Kuzmin](https://www.linkedin.com/in/konstantinkuzmin/), 
+    [Rensselaer Polytechnic Institute](https://www.rpi.edu).
+2.  Chapter 4.4 A Simple Implementation Scheme, 
+    *Computer Organization and Design, 5th edition* 
+    by David A. Patterson and John L. Hennessy.
+3.  Adding Support for jal to Single Cycle Datapath,
+    *EECC 550 Computer Organization* 
+    by Dr. Muhammad Shaaban, 
+    [Rochester Institute of Technology](https://www.rit.edu).
